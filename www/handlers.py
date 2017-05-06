@@ -109,7 +109,7 @@ async def get_blog(id):
         'comments': comments
     }
 
-@get('/manage/')
+@get('/manage')
 def manage():
     return 'redirect:/manage/comments'
 
