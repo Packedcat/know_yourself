@@ -264,7 +264,7 @@ async def api_delete_comments(id, request):
     return dict(id=id)
 
 @get('/api/blogs')
-asnyc def api_blogs(*, page='1'):
+async def api_blogs(*, page='1'):
     page_index = get_page_index(page)
     num = await Blog.findNumber('count(id)')
     p = Page(num, page_index)
