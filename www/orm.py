@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-__author__ = 'Kitsch'
-
 import logging, asyncio, aiomysql
 
 def log(sql, args=()):
@@ -212,7 +210,7 @@ class Model(dict, metaclass=ModelMetaclass):
                 sql.append('?')
                 args.append(limit)
             elif isinstance(limit, tuple) and len(limit) == 2:
-                sql.append('?', '?')
+                sql.append('?, ?')
                 # extend 接收一个iterable参数
                 args.extend(limit)
             else:
