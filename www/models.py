@@ -41,3 +41,30 @@ class Comment(Model):
     user_image = StringField(ddl='varchar(500)')
     content = TextField()
     created_at = FloatField(default=time.time)
+
+class Record(Model):
+    __table__ = 'record'
+
+    id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
+    user_id = StringField(ddl='varchar(50)')
+    user_name = StringField(ddl='varchar(50)')
+    user_image = StringField(ddl='varchar(500)')
+    content = TextField()
+    trash = BooleanField()
+    archive = BooleanField()
+    is_delete = BooleanField()
+    created_at = FloatField(default=time.time)
+
+class Tags(object):
+    __table__ = 'tags'
+
+    id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
+    tag = StringField(ddl='varchar(50)')
+    record_id = StringField(ddl='varchar(50)')
+
+# class Relationship(object):
+#     __table__ = 'relationship'
+
+#     id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
+#     tag_id = StringField(ddl='varchar(50)')
+#     record_id = StringField(ddl='varchar(50)')
