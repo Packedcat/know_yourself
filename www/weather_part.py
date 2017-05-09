@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+__author__ = 'Kitsch'
+
 from urllib import request,parse
 from xml.parsers.expat import ParserCreate
 

@@ -47,7 +47,8 @@ class Record(Model):
 
     id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
     user_id = StringField(ddl='varchar(50)')
-    genres = StringField(ddl='varchar(50)')
+    genres = StringField(default='Text', ddl='varchar(50)')
+    title = StringField(ddl='varchar(50)')
     content = TextField()
     trash = BooleanField()
     archive = BooleanField()
@@ -59,12 +60,14 @@ class Tags(Model):
 
     id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
     tag = StringField(ddl='varchar(50)')
+    user_id = StringField(ddl='varchar(50)')
     created_at = FloatField(default=time.time)
 
 class Relationship(Model):
     __table__ = 'relationship'
 
     id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
+    tag = StringField(ddl='varchar(50)')
     tag_id = StringField(ddl='varchar(50)')
     record_id = StringField(ddl='varchar(50)')
     created_at = FloatField(default=time.time)

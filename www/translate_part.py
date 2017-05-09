@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
- 
+
+__author__ = 'Kitsch'
+
 import hashlib
 import urllib
 import random
@@ -18,7 +20,7 @@ toLang = 'zh'
 salt = random.randint(32768, 65536)
 
 sign = appid+q+str(salt)+secretKey
-m1 = hashlib.md5(sign.encode(encoding='gb2312'))
+m1 = hashlib.md5(sign.encode('utf-8'))
 sign = m1.hexdigest()
 myurl = myurl+'?appid='+appid+'&q='+urllib.parse.quote(q)+'&from='+fromLang+'&to='+toLang+'&salt='+str(salt)+'&sign='+sign
 

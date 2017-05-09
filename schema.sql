@@ -49,6 +49,8 @@ create table comments (
 create table record (
     `id` varchar(50) not null,
     `user_id` varchar(50) not null,
+    `genres` varchar(50) not null,
+    `title` varchar(50),
     `content` mediumtext not null,
     `trash` bool not null,
     `archive` bool not null,
@@ -61,6 +63,7 @@ create table record (
 create table tags (
     `id` varchar(50) not null,
     `tag` varchar(50) not null,
+    `user_id` varchar(50) not null,
     `created_at` real not null,
     key `idx_created_at` (`created_at`),
     primary key (`id`)
@@ -68,6 +71,7 @@ create table tags (
 
 create table relationship (
     `id` varchar(50) not null,
+    `tag` varchar(50) not null,
     `tag_id` varchar(50) not null,
     `record_id` varchar(50) not null,
     `created_at` real not null,

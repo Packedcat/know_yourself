@@ -8,7 +8,7 @@ from aiohttp import web
 
 from config import configs
 from coreweb import get, post
-from models import User, Blog, Comment, Record, Tags, next_id
+from models import User, Blog, Comment, Record, Tags, Relationship, next_id
 from apis import Page, APIError, APIValueError, APIResourceNotFoundError
 
 # cookie键值
@@ -30,7 +30,7 @@ def text2html(text):
     lines = map(lambda s: '<p>%s</p>' % s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;'), filter(lambda s: s.strip() != '', text.split('\n')))
     return ''.join(lines)
 
-# 获取页码信息
+# 转成int
 def get_page_index(page_str):
     p = 1
     try:
@@ -314,45 +314,184 @@ async def api_delete_blog(request, *, id):
     await blog.remove()
     return dict(id=id)
 
+# Record part
+
+# 获取标签
 @get('/api/tags')
-async def api_get_tags():
-    tags = await Tags.findAll()
-    return tags
+async def api_get_tags(request):
+    check_admin(request)
+    tags = await Tags.findAll('user_id=?', [request.__user__.id])
+    return dict(tags=tags)
 
+# 创建标签
 @post('/api/tags')
-async def api_create_tags():
-    pass
+async def api_create_tags(request, *, tag):
+    check_admin(request)
+    if not tag or not tag.strip():
+        raise APIValueError('tag', 'tag cannot be empty.')
+    tag = Tags(user_id=request.__user__.id, tag=tag.strip())
+    await tag.save()
+    return tag
 
-@get('/api/record')
-async def api_get_record(*, id):
-    if not name or not name.strip():
-        pass
-    # left join
-    # select record.*,tags.tag from record 
-    # left join tags on tags.record_id = record.id
-    # record = Record.findAll()
-    # r = []
-    # record.map()
+# 更新标签
+@post('/api/tags/update')
+async def api_update_tags(request, *, id, tag):
+    check_admin(request)
+    t = await Tags.find(id)
+    if not id or not id.strip():
+        raise APIValueError('id', 'id cannot be empty.')
+    if not tag or not tag.strip():
+        raise APIValueError('tag', 'tag cannot be empty.')
+    t.tag = tag.strip()
+    await t.update()
+    return t
 
+# 删除标签
+@post('/api/tags/delete')
+async def api_delete_tags(request, *, id):
+    check_admin(request)
+    tag = await Tags.find(id)
+    await tag.remove()
+    return dict(id=id)
 
-# @get('/api/record')
-# async def api_get_idre(*, id):
-#         record_ids = await Blog.findAll(id)
-#     return blog
-    
-
-@post('/api/record')
-async def api_create_record(request, *, content, tags=None):
-    if not content or not content.strip():
-        raise APIValueError('content', 'content cannot be empty.')
-    record = Record(user_id=request.__user__.id, content=content.strip())
-    await record.save()
-    if tags:
-        for tt in tags.split(','):
-            t = Tags(record_id=record.id, tag=tt.strip())
-            await t.save()
-    return record
-
+@post('/api/tags/link')
+async def api_link_tag(request, * , tag_id, record_id):
+    if not tag_id or not tag_id.strip():
+        raise APIValueError('tag_id', 'tag_id cannot be empty.')
+    if not record_id or not record_id.strip():
+        raise APIValueError('record_id', 'record_id cannot be empty.')
+    tag = await Tags.find(tag_id)
+    link = Relationship(tag=tag.tag, tag_id=tag_id.strip(), record_id=record_id.strip())
+    await link.save()
+    return link
 
 # 获取记事
-# 
+@get('/api/record')
+async def api_get_record(*, page='1'):
+    page_index = get_page_index(page)
+    num = await Record.findNumber('count(id)')
+    p = Page(num, page_index)
+    if num == 0:
+        return dict(page=p, record=())
+    record = await Record.findAll()
+    for r in record:
+        tags = await Relationship.findAll('record_id=?', [r.id])
+        r.tags = tags
+    return dict(page=p, record=record)
+
+# 获取文字
+@get('/api/text')
+async def api_get_text(*, page='1'):
+    page_index = get_page_index(page)
+    num = await Record.findNumber('count(id)', 'genres=?', ['Text'])
+    p = Page(num, page_index)
+    if num == 0:
+        return dict(page=p, record=())
+    record = await Record.findAll('genres=?', ['Text'], orderBy='created_at desc', limit=(p.offset, p.limit))
+    for r in record:
+        tags = await Relationship.findAll('record_id=?', [r.id])
+        r.tags = tags
+    return dict(page=p, record=record)
+
+# 获取链接
+@get('/api/link')
+async def api_get_link(*, page='1'):
+    page_index = get_page_index(page)
+    num = await Record.findNumber('count(id)', 'genres=?', ['Sharing'])
+    p = Page(num, page_index)
+    if num == 0:
+        return dict(page=p, record=())
+    record = await Record.findAll('genres=?', ['Sharing'], orderBy='created_at desc', limit=(p.offset, p.limit))
+    for r in record:
+        tags = await Relationship.findAll('record_id=?', [r.id])
+        r.tags = tags
+    return dict(page=p, record=record)
+
+# 获取图片
+@get('/api/image')
+async def api_get_image(*, page='1'):
+    page_index = get_page_index(page)
+    num = await Record.findNumber('count(id)', 'genres=?', ['Picture'])
+    p = Page(num, page_index)
+    if num == 0:
+        return dict(page=p, record=())
+    record = await Record.findAll('genres=?', ['Picture'], orderBy='created_at desc', limit=(p.offset, p.limit))
+    for r in record:
+        tags = await Relationship.findAll('record_id=?', [r.id])
+        r.tags = tags
+    return dict(page=p, record=record)
+
+# 获取音频
+@get('/api/audio')
+async def api_get_audio(*, page='1'):
+    page_index = get_page_index(page)
+    num = await Record.findNumber('count(id)', 'genres=?', ['Recording'])
+    p = Page(num, page_index)
+    if num == 0:
+        return dict(page=p, record=())
+    record = await Record.findAll('genres=?', ['Recording'], orderBy='created_at desc', limit=(p.offset, p.limit))
+    for r in record:
+        tags = await Relationship.findAll('record_id=?', [r.id])
+        r.tags = tags
+    return dict(page=p, record=record)
+
+# 获取文件
+@get('/api/file')
+async def api_get_file(*, page='1'):
+    page_index = get_page_index(page)
+    num = await Record.findNumber('count(id)', 'genres=?', ['Attachment'])
+    p = Page(num, page_index)
+    if num == 0:
+        return dict(page=p, record=())
+    record = await Record.findAll('genres=?', ['Attachment'], orderBy='created_at desc', limit=(p.offset, p.limit))
+    for r in record:
+        tags = await Relationship.findAll('record_id=?', [r.id])
+        r.tags = tags
+    return dict(page=p, record=record)
+
+# 创建记事
+@post('/api/record')
+async def api_create_record(request, *, content, title='自分', genres='Text'):
+    if not content or not content.strip():
+        raise APIValueError('content', 'content cannot be empty.')
+    record = Record(user_id=request.__user__.id, title=title.strip(), genres=genres.strip(), content=content.strip())
+    await record.save()
+    return record
+
+# 更新记事
+@post('/api/record/update')
+async def api_update_blog(request, *, id, content, title=None):
+    check_admin(request)
+    record = await Record.find(id)
+    if content:
+        record.content = content.strip()
+    if title:
+        record.title = title.strip()
+    await record.update()
+    return record
+
+# 记事归档
+@post('/api/record/archive')
+async def api_archive_record(request, *, id):
+    check_admin(request)
+    record = await Record.find(id)
+    record.archive = 1
+    await record.update()
+    return record
+
+# 记事删除
+@post('/api/record/delete')
+async def api_delete_record(request, *, id):
+    check_admin(request)
+    record = await Record.find(id)
+    record.trash = 1
+    await record.update()
+    return record
+
+# 记事移除
+@post('/api/record/remove')
+async def api_remove_record(request, *, id):
+    check_admin(request)
+    record = await Record.find(id)
+    await record.remove()
+    return dict(id=id)
