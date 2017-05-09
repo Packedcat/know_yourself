@@ -7,6 +7,8 @@ import asyncio
 import itchat
 import orm
 import requests
+
+from itchat.content import *
 from handlers import api_create_blog
 from config import configs
 from models import User, Blog, Comment, next_id
@@ -40,17 +42,33 @@ def get_response(msg, user):
     except:
         return
 
-@itchat.msg_register(itchat.content.TEXT)
-def print_content(msg):
-    if msg['ToUserName'] != 'filehelper': return
-    defaultReply = 'I received: ' + msg['Text']
-    reply = loop.run_until_complete(odst())
-    print(reply)
-    return reply[:50] or defaultReply
-    # reply = get_response(msg['Text'], msg['ToUserName'])
-    # return reply[:10] or defaultReply
-    # if msg['Text'] == u'add':
-        # itchat.send('unid', 'filehelper')
+# send方法
+# itchat.send('Hello world!', toUserName)
+# itchat.send('@img@%s' % 'path', toUserName)
+# itchat.send('@fil@%s' % 'path', toUserName)
+# itchat.send('@vid@%s' % 'path', toUserName)
+@itchat.msg_register([PICTURE, RECORDING, ATTACHMENT, VIDEO])
+def download_files(msg):
+    path = msg['Text']('./static/%s' % msg['FileName'])
+    itchat.send('@%s@%s'%('img' if msg['Type'] == 'Picture' else 'fil', './static/%s' % msg['FileName']), msg['FromUserName'])
+    return '%s received'%msg['Type']
+
+@itchat.msg_register([TEXT, MAP, CARD, NOTE, SHARING])
+def text_reply(msg):
+    url = None
+    if msg['Type'] == SHARING:
+        url = msg['Url']
+        print(msg['Url'])
+    itchat.send('%s: %s' % (msg['Type'], url or msg['Text']), msg['FromUserName'])
+
+# @itchat.msg_register(itchat.content.TEXT)
+# def print_content(msg):
+#     if msg['ToUserName'] != 'filehelper': return
+#     defaultReply = 'I received: ' + msg['Text']
+#     reply = loop.run_until_complete(odst())
+#     reply = get_response(msg['Text'], msg['ToUserName'])
+#     print(reply)
+#     return reply[:50] or defaultReply
 
 itchat.auto_login(hotReload=True)
 itchat.run()

@@ -6,13 +6,19 @@ __author__ = 'Kitsch'
 import asyncio
 
 import orm
-from models import User
+from models import User, Record, Tags
+from handlers import api_create_record, api_get_tags
 
 loop = asyncio.get_event_loop()
 
+# fakeData
+class FakeRequest(object):
+    def __init__(self, arg):
+        self.__user__ = arg
+
 # 插入
 async def insert():
-    await orm.create_pool(loop,user='yoite', password='71546', db='awesome')
+    await orm.create_pool(loop,user='yoite', password='71546', db='test')
     u = User(name='test', email='test@example.com', passwd='1234567890', image='about:blank')
     await u.save()
     r = await User.findAll()
@@ -47,5 +53,15 @@ async def find():
     print(num)
     await orm.destory_pool()
 
-loop.run_until_complete(insert())
+# API测试
+async def testAPI():
+    await orm.create_pool(loop, user='yoite', password='71546', db='test')
+    # user = await User.find('00149422418865157a0b47b6d1447eda7bafe90337bbf4d000')
+    # default_request = FakeRequest(user)
+    # r = await api_create_record(default_request, content='第二份content', tags='t1,t2')
+    r = await api_get_tags()
+    return str(r)
+
+reply = loop.run_until_complete(testAPI())
+print(reply)
 loop.close()

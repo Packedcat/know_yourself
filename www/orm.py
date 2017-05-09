@@ -234,6 +234,21 @@ class Model(dict, metaclass=ModelMetaclass):
         return rs[0]['_num_']
 
     @classmethod
+    async def findDistinct(cls, selectedField, where=None, args=None):
+        ' find object by distinct key. '
+        sql = ['select distinct %s from `%s`' % (selectedField, cls.__table__)]
+        if where:
+            sql.append('where')
+            sql.append(where)
+        rs = await select(' '.join(sql), args)
+        return [r[selectedField] for r in rs]
+
+    @classmethod
+    async def findJoin(cls, selectedField, where=None, args=None):
+        sql = ['select distinct %s from `%s`' % (selectedField, cls.__table__)]
+
+        
+    @classmethod
     async def find(cls, pk):
         ' find object by primary key. '
         rs = await select('%s where `%s`=?' % (cls.__select__, cls.__primary_key__), [pk], 1)

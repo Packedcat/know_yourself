@@ -8,7 +8,7 @@ from aiohttp import web
 
 from config import configs
 from coreweb import get, post
-from models import User, Blog, Comment, next_id
+from models import User, Blog, Comment, Record, Tags, next_id
 from apis import Page, APIError, APIValueError, APIResourceNotFoundError
 
 # cookie键值
@@ -313,3 +313,46 @@ async def api_delete_blog(request, *, id):
     blog = await Blog.find(id)
     await blog.remove()
     return dict(id=id)
+
+@get('/api/tags')
+async def api_get_tags():
+    tags = await Tags.findAll()
+    return tags
+
+@post('/api/tags')
+async def api_create_tags():
+    pass
+
+@get('/api/record')
+async def api_get_record(*, id):
+    if not name or not name.strip():
+        pass
+    # left join
+    # select record.*,tags.tag from record 
+    # left join tags on tags.record_id = record.id
+    # record = Record.findAll()
+    # r = []
+    # record.map()
+
+
+# @get('/api/record')
+# async def api_get_idre(*, id):
+#         record_ids = await Blog.findAll(id)
+#     return blog
+    
+
+@post('/api/record')
+async def api_create_record(request, *, content, tags=None):
+    if not content or not content.strip():
+        raise APIValueError('content', 'content cannot be empty.')
+    record = Record(user_id=request.__user__.id, content=content.strip())
+    await record.save()
+    if tags:
+        for tt in tags.split(','):
+            t = Tags(record_id=record.id, tag=tt.strip())
+            await t.save()
+    return record
+
+
+# 获取记事
+# 
