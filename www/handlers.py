@@ -218,6 +218,11 @@ async def api_register_user(*, email, name, passwd):
     r.body = json.dumps(user, ensure_ascii=False).encode('utf-8')
     return r
 
+@get('/api/user')
+async def api_get_user(request):
+    user = request.__user__
+    return dict(user=user)
+
 @get('/api/users')
 async def api_get_users(*, page='1'):
     page_index = get_page_index(page)
@@ -319,14 +324,14 @@ async def api_delete_blog(request, *, id):
 # 获取标签
 @get('/api/tags')
 async def api_get_tags(request):
-    check_admin(request)
+    # check_admin(request)
     tags = await Tags.findAll('user_id=?', [request.__user__.id])
     return dict(tags=tags)
 
 # 创建标签
 @post('/api/tags')
 async def api_create_tags(request, *, tag):
-    check_admin(request)
+    # check_admin(request)
     if not tag or not tag.strip():
         raise APIValueError('tag', 'tag cannot be empty.')
     tag = Tags(user_id=request.__user__.id, tag=tag.strip())
@@ -336,7 +341,7 @@ async def api_create_tags(request, *, tag):
 # 更新标签
 @post('/api/tags/update')
 async def api_update_tags(request, *, id, tag):
-    check_admin(request)
+    # check_admin(request)
     t = await Tags.find(id)
     if not id or not id.strip():
         raise APIValueError('id', 'id cannot be empty.')
@@ -349,7 +354,7 @@ async def api_update_tags(request, *, id, tag):
 # 删除标签
 @post('/api/tags/delete')
 async def api_delete_tags(request, *, id):
-    check_admin(request)
+    # check_admin(request)
     tag = await Tags.find(id)
     await tag.remove()
     return dict(id=id)
@@ -361,6 +366,9 @@ async def api_link_tag(request, * , tag_ids, record_id):
         raise APIValueError('tag_ids', 'tag_ids cannot be empty.')
     if not record_id or not record_id.strip():
         raise APIValueError('record_id', 'record_id cannot be empty.')
+    rl = await Relationship.findAll('record_id=?', [record_id])
+    for r in rl:
+        await r.remove()
     idList = tag_ids.split(',')
     links = []
     for tag_id in idList:
@@ -372,19 +380,22 @@ async def api_link_tag(request, * , tag_ids, record_id):
 
 # 获取记事
 @get('/api/record')
-async def api_get_record(*, page='1'):
+async def api_get_record(request, *, page='1'):
+    # check_admin(request)
+    id = request.__user__.id
     page_index = get_page_index(page)
     num = await Record.findNumber('count(id)')
     p = Page(num, page_index)
     if num == 0:
         return dict(page=p, record=())
-    record = await Record.findAll(orderBy='created_at desc', limit=(p.offset, p.limit))
+    record = await Record.findAll('trash=? and archive=? and user_id=?', [False, False, id], orderBy='created_at desc', limit=(p.offset, p.limit))
     for r in record:
         tags = await Relationship.findAll('record_id=?', [r.id])
         # 去重
         r.tags = tags
     return dict(page=p, record=record)
 
+# 按照标签获取标签
 @get('/api/record/bytag')
 async def api_record_bytag(*, tag_id):
     if not tag_id or not tag_id.strip():
@@ -407,13 +418,14 @@ async def api_record_bytag(*, tag_id):
 
 # 获取文字
 @get('/api/text')
-async def api_get_text(*, page='1'):
+async def api_get_text(request, *, page='1'):
+    id = request.__user__.id
     page_index = get_page_index(page)
     num = await Record.findNumber('count(id)', 'genres=?', ['Text'])
     p = Page(num, page_index)
     if num == 0:
         return dict(page=p, record=())
-    record = await Record.findAll('genres=?', ['Text'], orderBy='created_at desc', limit=(p.offset, p.limit))
+    record = await Record.findAll('genres=? and user_id=?', ['Text', id], orderBy='created_at desc', limit=(p.offset, p.limit))
     for r in record:
         tags = await Relationship.findAll('record_id=?', [r.id])
         r.tags = tags
@@ -421,13 +433,14 @@ async def api_get_text(*, page='1'):
 
 # 获取链接
 @get('/api/sharing')
-async def api_get_link(*, page='1'):
+async def api_get_link(request, *, page='1'):
+    id = request.__user__.id
     page_index = get_page_index(page)
     num = await Record.findNumber('count(id)', 'genres=?', ['Sharing'])
     p = Page(num, page_index)
     if num == 0:
         return dict(page=p, record=())
-    record = await Record.findAll('genres=?', ['Sharing'], orderBy='created_at desc', limit=(p.offset, p.limit))
+    record = await Record.findAll('genres=? and user_id=?', ['Sharing', id], orderBy='created_at desc', limit=(p.offset, p.limit))
     for r in record:
         tags = await Relationship.findAll('record_id=?', [r.id])
         r.tags = tags
@@ -435,13 +448,14 @@ async def api_get_link(*, page='1'):
 
 # 获取图片
 @get('/api/picture')
-async def api_get_image(*, page='1'):
+async def api_get_image(request, *, page='1'):
+    id = request.__user__.id
     page_index = get_page_index(page)
     num = await Record.findNumber('count(id)', 'genres=?', ['Picture'])
     p = Page(num, page_index)
     if num == 0:
         return dict(page=p, record=())
-    record = await Record.findAll('genres=?', ['Picture'], orderBy='created_at desc', limit=(p.offset, p.limit))
+    record = await Record.findAll('genres=? and user_id=?', ['Picture', id], orderBy='created_at desc', limit=(p.offset, p.limit))
     for r in record:
         tags = await Relationship.findAll('record_id=?', [r.id])
         r.tags = tags
@@ -449,13 +463,14 @@ async def api_get_image(*, page='1'):
 
 # 获取音频
 @get('/api/recording')
-async def api_get_audio(*, page='1'):
+async def api_get_audio(request, *, page='1'):
+    id = request.__user__.id
     page_index = get_page_index(page)
     num = await Record.findNumber('count(id)', 'genres=?', ['Recording'])
     p = Page(num, page_index)
     if num == 0:
         return dict(page=p, record=())
-    record = await Record.findAll('genres=?', ['Recording'], orderBy='created_at desc', limit=(p.offset, p.limit))
+    record = await Record.findAll('genres=? and user_id=?', ['Recording', id], orderBy='created_at desc', limit=(p.offset, p.limit))
     for r in record:
         tags = await Relationship.findAll('record_id=?', [r.id])
         r.tags = tags
@@ -463,13 +478,14 @@ async def api_get_audio(*, page='1'):
 
 # 获取文件
 @get('/api/attachment')
-async def api_get_file(*, page='1'):
+async def api_get_file(request, *, page='1'):
+    id = request.__user__.id
     page_index = get_page_index(page)
     num = await Record.findNumber('count(id)', 'genres=?', ['Attachment'])
     p = Page(num, page_index)
     if num == 0:
         return dict(page=p, record=())
-    record = await Record.findAll('genres=?', ['Attachment'], orderBy='created_at desc', limit=(p.offset, p.limit))
+    record = await Record.findAll('genres=? and user_id=?', ['Attachment', id], orderBy='created_at desc', limit=(p.offset, p.limit))
     for r in record:
         tags = await Relationship.findAll('record_id=?', [r.id])
         r.tags = tags
@@ -487,7 +503,7 @@ async def api_create_record(request, *, content, title='自分', genres='Text'):
 # 更新记事
 @post('/api/record/update')
 async def api_update_blog(request, *, id, content, title=None):
-    check_admin(request)
+    # check_admin(request)
     record = await Record.find(id)
     if content:
         record.content = content.strip()
@@ -496,28 +512,58 @@ async def api_update_blog(request, *, id, content, title=None):
     await record.update()
     return record
 
+# 获取归档
+@get('/api/archive')
+async def api_get_archive(request, *, page='1'):
+    id = request.__user__.id
+    page_index = get_page_index(page)
+    num = await Record.findNumber('count(id)', 'archive=? and trash=?', [True, False])
+    p = Page(num, page_index)
+    if num == 0:
+        return dict(page=p, record=())
+    record = await Record.findAll('archive=? and trash=? and user_id=?', [True, False, id], orderBy='created_at desc', limit=(p.offset, p.limit))
+    for r in record:
+        tags = await Relationship.findAll('record_id=?', [r.id])
+        r.tags = tags
+    return dict(page=p, record=record)
+
+# 获取删除
+@get('/api/trash')
+async def api_get_trash(request, *, page='1'):
+    id = request.__user__.id
+    page_index = get_page_index(page)
+    num = await Record.findNumber('count(id)', 'trash=? and archive=?', [True, False])
+    p = Page(num, page_index)
+    if num == 0:
+        return dict(page=p, record=())
+    record = await Record.findAll('trash=? and archive=? and user_id=?', [True, False, id], orderBy='created_at desc', limit=(p.offset, p.limit))
+    for r in record:
+        tags = await Relationship.findAll('record_id=?', [r.id])
+        r.tags = tags
+    return dict(page=p, record=record)
+
 # 记事归档
 @post('/api/record/archive')
 async def api_archive_record(request, *, id):
-    check_admin(request)
+    # check_admin(request)
     record = await Record.find(id)
-    record.archive = 1
+    record.archive = not record.archive
     await record.update()
     return record
 
 # 记事删除
 @post('/api/record/trash')
 async def api_delete_record(request, *, id):
-    check_admin(request)
+    # check_admin(request)
     record = await Record.find(id)
-    record.trash = 1
+    record.trash = not record.trash
     await record.update()
     return record
 
 # 记事移除
 @post('/api/record/remove')
 async def api_remove_record(request, *, id):
-    check_admin(request)
+    # check_admin(request)
     record = await Record.find(id)
     await record.remove()
     return dict(id=id)
