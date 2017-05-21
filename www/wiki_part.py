@@ -22,11 +22,11 @@ def wiki_pedia(msg):
     if l[0] == '找':
         r = wikipedia.search(l[1])
         print(r)
-        itchat.send('是不是在找这些\n%s' % '\n'.join(r), msg['FromUserName'])
+        itchat.send('是不是在找这些\n%s' % '\n'.join(r), 'filehelper')
     elif l[0] == '开':
         page = wikipedia.page(l[1])
         print(page)
-        itchat.send('%s\n%s' % (page.content, page.url), msg['FromUserName'])
+        itchat.send('%s\n%s' % (page.content, page.url), 'filehelper')
     else:
         itchat.send('貌似有错误poi', msg['FromUserName'])
 

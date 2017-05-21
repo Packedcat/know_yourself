@@ -7,11 +7,19 @@ import asyncio
 import itchat
 import orm
 import requests
+import wikipedia
 
 from itchat.content import *
 from handlers import api_create_blog, api_create_record
 from config import configs
 from models import User, Blog, Comment, next_id
+
+wikipedia.set_lang('jp')
+
+HELP_MSG = u'''\
+找@`placeholder`
+开@`placeholder`\
+'''
 
 loop = asyncio.get_event_loop()
 
@@ -62,16 +70,28 @@ def download_files(msg):
 @itchat.msg_register([TEXT, SHARING])
 def text_reply(msg):
     # if msg['ToUserName'] != 'filehelper': return
-    print(msg)
-    genres = msg['Type']
-    title = msg['ToUserName']
-    content = msg['Text']
-    if msg['Type'] == SHARING:
-        title = msg['Text']
-        content = msg['Url']
-    r = loop.run_until_complete(odst(content, title, genres))
-    print(r)
-    itchat.send('%s: %s' % (msg['Type'], content), 'filehelper')
+    # print(msg)
+    print(msg['Text'])
+    l = msg['Text'].split('@')
+    print(l)
+    if l[0] == '找':
+        r = wikipedia.search(l[1])
+        print(r)
+        itchat.send('是不是在找这些\n%s' % '\n'.join(r), 'filehelper')
+    elif l[0] == '开':
+        page = wikipedia.page(l[1])
+        print(page)
+        itchat.send('%s\n%s' % (page.content, page.url), 'filehelper')
+    else:
+        genres = msg['Type']
+        title = msg['ToUserName']
+        content = msg['Text']
+        if msg['Type'] == SHARING:
+            title = msg['Text']
+            content = msg['Url']
+        r = loop.run_until_complete(odst(content, title, genres))
+        print(r)
+        itchat.send('%s: %s' % (msg['Type'], content), 'filehelper')
 
 # @itchat.msg_register(itchat.content.TEXT)
 # def print_content(msg):
