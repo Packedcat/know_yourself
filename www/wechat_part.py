@@ -23,11 +23,15 @@ loop = asyncio.get_event_loop()
 wikipedia.set_lang('jp')
 
 # 帮助信息
-HELP_MSG = u'''
+HELP_MSG = u'''\
+暂未绑定账号
+请输入邮箱密码
+中间用分号隔开
+===========
 使用以下命令搜寻关键词
 search@"placeholder"
 使用以下命令开启页面
-open@"placeholder"
+open@"placeholder"\
 '''
 
 # 登录用户
@@ -73,6 +77,9 @@ def get_response(msg, user):
 @itchat.msg_register([PICTURE, RECORDING, ATTACHMENT, VIDEO])
 def download_files(msg):
     if msg['ToUserName'] != 'filehelper': return
+    if not USER:
+        itchat.send(HELP_MSG, 'filehelper')
+        return
     path = './static/%s/%s' % (msg['Type'].lower(), msg['FileName'])
     result = msg['Text'](path)
     content = path[1:]
@@ -81,39 +88,41 @@ def download_files(msg):
     r = loop.run_until_complete(create(content, title, genres))
     itchat.send('%s received\nPath: %s' % (msg['Type'], content), 'filehelper')
 
-# @itchat.msg_register([TEXT, SHARING])
-# def text_reply(msg):
-#     # if msg['ToUserName'] != 'filehelper': return
-#     l = msg['Text'].split('@')
-#     if l[0] == 'search':
-#         r = wikipedia.search(l[1], results=5)
-#         if len(r) == 0:
-#             itchat.send('无查询结果', 'filehelper')
-#         else:
-#             itchat.send('是不是在找这些\n%s' % '\n'.join(r), 'filehelper')
-#     elif l[0] == 'open':
-#         page = wikipedia.page(l[1].encode('utf-8'))
-#         itchat.send('%s\n%s' % (page.content, page.url), 'filehelper')
-#     else:
-#         genres = msg['Type']
-#         title = msg['ToUserName']
-#         content = msg['Text']
-#         if msg['Type'] == SHARING:
-#             title = msg['Text']
-#             content = msg['Url']
-#         r = loop.run_until_complete(odst(content, title, genres))
-#         itchat.send('%s: %s' % (msg['Type'], content), 'filehelper')
-
-@itchat.msg_register(TEXT)
+@itchat.msg_register([TEXT, SHARING])
 def text_reply(msg):
     if msg['ToUserName'] != 'filehelper': return
-    auth = msg['Text'].split(';')
-    if len(auth) != 2:
-        itchat.send('请输入邮箱密码，中间用分号隔开', 'filehelper')
+    l = msg['Text'].split('@')
+    print(l)
+    if l[0] == 'search':
+        r = wikipedia.search(l[1], results=5)
+        if len(r) == 0:
+            itchat.send('HINT:无查询结果', 'filehelper')
+            return
+        else:
+            itchat.send('HINT:是不是在找这些\n%s' % '\n'.join(r), 'filehelper')
+            return
+    elif l[0] == 'open':
+        page = wikipedia.page(l[1].encode('utf-8'))
+        print(page.url)
+        itchat.send('HINT:%s\n%s' % (page.content, page.url), 'filehelper')
+        return
+    if not USER:
+        auth = msg['Text'].split(';')
+        if len(auth) != 2:
+            itchat.send(HELP_MSG, 'filehelper')
+        else:
+            email, passwd = auth
+            loop.run_until_complete(login(email, passwd))
+            itchat.send(u'ようこそ：%s' % USER['name'], 'filehelper')
     else:
-        email, passwd = auth
-    loop.run_until_complete(login(email, passwd))
-    itchat.send('ようこそ：%s' % USER['name'], 'filehelper')
+        genres = msg['Type']
+        title = u'文字备忘'
+        content = msg['Text']
+        if msg['Type'] == SHARING:
+            title = msg['Text']
+            content = msg['Url']
+        r = loop.run_until_complete(create(content, title, genres))
+        itchat.send('%s: %s' % (msg['Type'], content), 'filehelper')
 
 itchat.auto_login(hotReload=True)
 itchat.run()
