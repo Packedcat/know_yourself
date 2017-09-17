@@ -1,6 +1,7 @@
 .idea/
 __pycache__/
 .DS_Store
+*.pyc
 www/static/attachment/
 www/static/picture/
 www/static/recording/
