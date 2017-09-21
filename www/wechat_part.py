@@ -12,9 +12,9 @@ import hashlib
 import json
 
 from itchat.content import *
-from handlers import api_create_blog, api_create_record, authenticate
+from handlers import api_create_record, authenticate
 from config import configs
-from models import User, Blog, Comment, next_id
+from models import User, next_id
 
 # 获取事件循环
 loop = asyncio.get_event_loop()

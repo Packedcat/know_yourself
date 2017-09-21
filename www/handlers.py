@@ -79,7 +79,7 @@ async def cookie2user(cookie_str):
         return None
 
 
-@get('/signout')
+@get('/api/signout')
 def signout(request):
     referer = request.headers.get('Referer')
     r = web.HTTPFound(referer or '/')
