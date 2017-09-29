@@ -228,7 +228,7 @@ async def api_get_record(request, *, page='1'):
     check_admin(request)
     id = request.__user__.id
     page_index = get_page_index(page)
-    num = await Record.findNumber('count(id)')
+    num = await Record.findNumber('count(id)', 'user_id=?', [id])
     p = Page(num, page_index)
     if num == 0:
         return dict(page=p, record=())
@@ -271,7 +271,9 @@ async def api_get_text(request, *, page='1'):
     check_admin(request)
     id = request.__user__.id
     page_index = get_page_index(page)
-    num = await Record.findNumber('count(id)', 'genres=?', ['Text'])
+    num = await Record.findNumber('count(id)',
+                                  'genres=? and user_id=?',
+                                  ['Text', id])
     p = Page(num, page_index)
     if num == 0:
         return dict(page=p, record=())
@@ -292,7 +294,9 @@ async def api_get_link(request, *, page='1'):
     check_admin(request)
     id = request.__user__.id
     page_index = get_page_index(page)
-    num = await Record.findNumber('count(id)', 'genres=?', ['Sharing'])
+    num = await Record.findNumber('count(id)',
+                                  'genres=? and user_id=?',
+                                  ['Sharing', id])
     p = Page(num, page_index)
     if num == 0:
         return dict(page=p, record=())
@@ -313,7 +317,9 @@ async def api_get_image(request, *, page='1'):
     check_admin(request)
     id = request.__user__.id
     page_index = get_page_index(page)
-    num = await Record.findNumber('count(id)', 'genres=?', ['Picture'])
+    num = await Record.findNumber('count(id)',
+                                  'genres=? and user_id=?',
+                                  ['Picture', id])
     p = Page(num, page_index)
     if num == 0:
         return dict(page=p, record=())
@@ -334,7 +340,9 @@ async def api_get_audio(request, *, page='1'):
     check_admin(request)
     id = request.__user__.id
     page_index = get_page_index(page)
-    num = await Record.findNumber('count(id)', 'genres=?', ['Recording'])
+    num = await Record.findNumber('count(id)',
+                                  'genres=? and user_id=?',
+                                  ['Recording', id])
     p = Page(num, page_index)
     if num == 0:
         return dict(page=p, record=())
@@ -355,7 +363,9 @@ async def api_get_file(request, *, page='1'):
     check_admin(request)
     id = request.__user__.id
     page_index = get_page_index(page)
-    num = await Record.findNumber('count(id)', 'genres=?', ['Attachment'])
+    num = await Record.findNumber('count(id)',
+                                  'genres=? and user_id=?',
+                                  ['Attachment', id])
     p = Page(num, page_index)
     if num == 0:
         return dict(page=p, record=())
@@ -401,8 +411,8 @@ async def api_get_archive(request, *, page='1'):
     page_index = get_page_index(page)
     num = await Record.findNumber(
         'count(id)',
-        'archive=? and trash=?',
-        [True, False]
+        'archive=? and trash=? and user_id=?',
+        [True, False, id]
     )
     p = Page(num, page_index)
     if num == 0:
@@ -426,8 +436,8 @@ async def api_get_trash(request, *, page='1'):
     page_index = get_page_index(page)
     num = await Record.findNumber(
         'count(id)',
-        'trash=? and archive=?',
-        [True, False]
+        'trash=? and archive=? and user_id=?',
+        [True, False, id]
     )
     p = Page(num, page_index)
     if num == 0:

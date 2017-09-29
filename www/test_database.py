@@ -55,11 +55,10 @@ async def find():
 
 # API测试
 async def testAPI():
-    await orm.create_pool(loop, user='yoite', password='71546', db='test')
-    # user = await User.find('00149422418865157a0b47b6d1447eda7bafe90337bbf4d000')
-    # default_request = FakeRequest(user)
-    # r = await api_create_record(default_request, content='第二份content', tags='t1,t2')
-    r = await api_get_tags()
+    await orm.create_pool(loop, user='yoite', password='71546', db='awesome')
+    user = await User.find('0015060907967599013c99ccea04eb0b33b4348c45c4702000')
+    default_request = FakeRequest(user)
+    r = await api_create_record(default_request, content='content')
     return str(r)
 
 reply = loop.run_until_complete(testAPI())
